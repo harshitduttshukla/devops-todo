@@ -1,11 +1,19 @@
 FROM ubuntu:22.04
 
-# Install Puppet and dependencies
-RUN apt-get update && \
-    apt-get install -y puppet git curl nodejs npm
+# Install dependencies
+RUN apt-get update -y && \
+    apt-get install -y curl git unzip wget puppet && \
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs
 
 # Copy Puppet module
-COPY modules /etc/puppet/modules
+COPY ./modules /etc/puppetlabs/code/environments/production/modules
 
-# Apply Puppet manifest
-CMD ["puppet", "apply", "-e", "include appdeploy", "--modulepath=/etc/puppet/modules"]
+# Apply Puppet configuration
+RUN puppet apply -e "include appdeploy"
+
+# Expose React app port
+EXPOSE 8082
+
+# Start the React app and keep it running
+CMD ["npm", "start", "--prefix", "/opt/todo"]
